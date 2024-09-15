@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  my-streamlit-app:
+
+    restart : always
+    container_name : my-streamlit-app
+    build:
+      context: .      
+      dockerfile: Dockerfile  
+    ports:
+      - "8501:8501"
