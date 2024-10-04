@@ -1,0 +1,41 @@
+# frontend/Dockerfile
+
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim
+
+# Set environment variables to prevent Python from writing .pyc files and buffer stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies (if any required by Streamlit)
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    curl \
+    gnupg2 \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    fonts-liberation \
+    libappindicator3-1 \
+    libgbm1 \
+    libxshmfence1 \
+    xdg-utils \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY ./requirements.txt /frontend/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /frontend/requirements.txt
+
+# Set working directory
+WORKDIR /frontend
+
+# Copy the rest of the application code
+COPY . /frontend/
+
+# Expose port 8501 for Streamlit
+EXPOSE 8501
+
+# Run the Streamlit application
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

@@ -1,0 +1,55 @@
+# backend/Dockerfile
+
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim
+
+# Set environment variables to prevent Python from writing .pyc files and buffer stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV TOKENIZERS_PARALLELISM=false
+
+# Install system dependencies for Chrome and WebDriver
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    curl \
+    gnupg2 \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    fonts-liberation \
+    libappindicator3-1 \
+    libgbm1 \
+    libxshmfence1 \
+    xdg-utils \
+    ocrmypdf \
+    poppler-utils \
+    tesseract-ocr \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install the latest Google Chrome .deb package
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt-get update && \
+    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install && \
+    rm google-chrome-stable_current_amd64.deb
+    
+# Install Python dependencies
+COPY ./requirements.txt /backend/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /backend/requirements.txt
+
+# Install ChromeDriver using WebDriverManager
+RUN python -m webdriver_manager.chrome install
+# Set working directory
+WORKDIR /backend
+
+# Copy the rest of the application code
+COPY . /backend/
+
+# Expose port 8000 for FastAPI
+EXPOSE 8000
+
+# Correct CMD to point to main:app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
